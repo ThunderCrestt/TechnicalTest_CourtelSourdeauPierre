@@ -6,6 +6,7 @@ using UnityEditorInternal;
 using com.technical.test;
 public class RotatorEditorWindow : EditorWindow
 {
+    //the several toggles to display and manage checkboxes
     bool toggleIdentifier;
     bool toggleTimeBeforeStop;
     bool toggleReverseRotation;
@@ -14,15 +15,18 @@ public class RotatorEditorWindow : EditorWindow
     bool toggleAngleRotation;
     bool toggleTimeToRotate;
 
+    //the variables of the rotator
     string identifier;
     float timeBeforeStop;
     bool reverseRotation;
     [SerializeField]
     RotationSettings rotationSettings;
 
+    //the rotators list
     [SerializeField]
     public List<Rotator> rotatorsToEdit = new List<Rotator>();
 
+    //
     ScriptableObject target;
     SerializedObject serializableObjectTarget;
     SerializedProperty listProperty;
