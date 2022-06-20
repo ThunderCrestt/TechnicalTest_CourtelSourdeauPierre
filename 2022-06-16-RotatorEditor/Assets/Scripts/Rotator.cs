@@ -19,8 +19,8 @@ namespace com.technical.test
         [SerializeField]
         public RotationSettings _rotationsSettings = default;
 
-        public float _angleModifier = 1f;
-        public float _timePassed;
+        private float _angleModifier = 1f;
+        private float _timePassed;
 
         void Awake()
         {

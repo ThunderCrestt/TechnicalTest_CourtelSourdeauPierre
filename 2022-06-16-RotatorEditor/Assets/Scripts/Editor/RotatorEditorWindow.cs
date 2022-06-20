@@ -7,21 +7,24 @@ using com.technical.test;
 public class RotatorEditorWindow : EditorWindow
 {
     bool toggleIdentifier;
-    string identifier;
     bool toggleTimeBeforeStop;
-    float timeBeforeStop;
     bool toggleReverseRotation;
-    bool reverseRotation;
     bool toggleRotationSettings;
-
-    [SerializeField]
-    RotationSettings rotationSettings;
     bool toggleObjectToRotate;
     bool toggleAngleRotation;
     bool toggleTimeToRotate;
 
+    string identifier;
+    float timeBeforeStop;
+    bool reverseRotation;
+    [SerializeField]
+    RotationSettings rotationSettings;
     [SerializeField]
     List<Rotator> rotatorsToEdit;
+
+    ScriptableObject target;
+    SerializedObject serializableObjectTarget;
+    SerializedProperty listProperty;
 
     Vector2 scrollPos = Vector2.zero;
 
@@ -43,21 +46,26 @@ public class RotatorEditorWindow : EditorWindow
         EditorGUI.DrawRect(r, color);
     }
 
+    private void OnEnable()
+    {
+       target = this;
+       serializableObjectTarget = new SerializedObject(target);
+       listProperty = serializableObjectTarget.FindProperty("rotatorsToEdit");
+    }
+
     //TODO : make undos
-    //TODO : modifier les valeurs quand un rotator est chargé, comment faire quand on en charge plusieurs ? peut être faire un toggle group dans la list pour choisir qui on modifie, et true de base
+    //TODO : when oppened from inspector, set the value from the current rotator;
     private void OnGUI()
     {
-        //TODO : quand valeurs changés appelé callback, modif valeurs, repaint.
         GUILayout.Label("Rotator Editor Window");
         //we search the SerializedProperty to add a custom list field in the editor window
-        ScriptableObject target = this;
-        SerializedObject serializableObjectTarget = new SerializedObject(target);
-        SerializedProperty listProperty = serializableObjectTarget.FindProperty("rotatorsToEdit");
+
         serializableObjectTarget.Update();
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField(listProperty, new GUIContent("Rotators to edit"), true);
         if(rotatorsToEdit?.Count > 0 && EditorGUI.EndChangeCheck() && rotatorsToEdit[rotatorsToEdit.Count - 1] != null)
         {
+            //TODO : update when rotator added maybe with reordable list ?
             identifier = rotatorsToEdit[rotatorsToEdit.Count - 1]._identifier;
             timeBeforeStop = rotatorsToEdit[rotatorsToEdit.Count - 1]._timeBeforeStoppingInSeconds;
             reverseRotation = rotatorsToEdit[rotatorsToEdit.Count - 1]._shouldReverseRotation;
@@ -169,7 +177,6 @@ public class RotatorEditorWindow : EditorWindow
                 EditorGUILayout.PropertyField(so.FindProperty("_shouldReverseRotation"), new GUIContent("Should Reverse Rotation"), true);
                 EditorGUILayout.PropertyField(so.FindProperty("_rotationsSettings"), new GUIContent("Rotations settings"), true);
                 EditorGUILayout.Space();
-
             }
 
         }
@@ -180,6 +187,22 @@ public class RotatorEditorWindow : EditorWindow
 
     private void ValidateChanges()
     {
-        //TODO : Validate Changes
+        foreach (Rotator rotator in rotatorsToEdit)
+        {
+            if (rotator != null)
+            {
+                if (toggleIdentifier) { rotator._identifier = identifier; }
+                if (toggleTimeBeforeStop) { rotator._timeBeforeStoppingInSeconds = timeBeforeStop; }
+                if (toggleReverseRotation) { rotator._shouldReverseRotation = reverseRotation; }
+                if (toggleRotationSettings) 
+                {
+                    if (toggleObjectToRotate) rotator._rotationsSettings.ObjectToRotate = rotationSettings.ObjectToRotate;
+                    if (toggleAngleRotation) rotator._rotationsSettings.AngleRotation = rotationSettings.AngleRotation;
+                    if (toggleTimeToRotate) rotator._rotationsSettings.TimeToRotateInSeconds = rotationSettings.TimeToRotateInSeconds;
+
+                }
+            }
+        }
+        Repaint();
     }
 }
