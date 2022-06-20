@@ -7,19 +7,23 @@ using com.technical.test;
 public class RotatorEditorWindow : EditorWindow
 {
     bool toggleIdentifier;
-    int identifier;
+    string identifier;
     bool toggleTimeBeforeStop;
     float timeBeforeStop;
     bool toggleReverseRotation;
     bool reverseRotation;
     bool toggleRotationSettings;
+
     [SerializeField]
     RotationSettings rotationSettings;
     bool toggleObjectToRotate;
     bool toggleAngleRotation;
     bool toggleTimeToRotate;
+
     [SerializeField]
-    List<GameObject> rotatorsToEdit;
+    List<Rotator> rotatorsToEdit;
+
+    Vector2 scrollPos = Vector2.zero;
 
     [MenuItem("Window/Custom/ Rotators Multiple Setter")]
     public static void ShowWindow()
@@ -39,27 +43,41 @@ public class RotatorEditorWindow : EditorWindow
         EditorGUI.DrawRect(r, color);
     }
 
-    //TODO : ajouter des check pour venir choisir ce qu'on modifie ( et pouvoir les modifier par la suite )
+    //TODO : make undos
     //TODO : modifier les valeurs quand un rotator est chargé, comment faire quand on en charge plusieurs ? peut être faire un toggle group dans la list pour choisir qui on modifie, et true de base
-    //TODO : ajouter un bouton pour valider les changements
-    //TODO : ajouter des fenêtres pour afficher les rotators qui vont être modifier ( par forcement possible de modifier à l'intérieur )
     private void OnGUI()
     {
+        //TODO : quand valeurs changés appelé callback, modif valeurs, repaint.
         GUILayout.Label("Rotator Editor Window");
         //we search the SerializedProperty to add a custom list field in the editor window
         ScriptableObject target = this;
         SerializedObject serializableObjectTarget = new SerializedObject(target);
         SerializedProperty listProperty = serializableObjectTarget.FindProperty("rotatorsToEdit");
-        EditorGUILayout.PropertyField(listProperty, new GUIContent("rotators to edit"), true);
-        serializableObjectTarget.ApplyModifiedProperties();
-
+        serializableObjectTarget.Update();
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(listProperty, new GUIContent("Rotators to edit"), true);
+        if(rotatorsToEdit?.Count > 0 && EditorGUI.EndChangeCheck() && rotatorsToEdit[rotatorsToEdit.Count - 1] != null)
+        {
+            identifier = rotatorsToEdit[rotatorsToEdit.Count - 1]._identifier;
+            timeBeforeStop = rotatorsToEdit[rotatorsToEdit.Count - 1]._timeBeforeStoppingInSeconds;
+            reverseRotation = rotatorsToEdit[rotatorsToEdit.Count - 1]._shouldReverseRotation;
+            rotationSettings = rotatorsToEdit[rotatorsToEdit.Count - 1]._rotationsSettings;
+            Debug.Log("changes");
+            Repaint();
+        }
         //draw a separator
         DrawUILine(Color.gray,1,5);
+
+        GUILayout.BeginHorizontal();
+        GUILayout.FlexibleSpace();
+        GUILayout.Label("Editor");
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
 
         //the identifier field in a toggle group
         EditorGUILayout.BeginHorizontal();
         toggleIdentifier = EditorGUILayout.BeginToggleGroup("Identifier :", toggleIdentifier);
-        identifier = EditorGUILayout.IntField(" ", identifier);
+        identifier = EditorGUILayout.TextField(" ", identifier);
         EditorGUILayout.EndToggleGroup();
         EditorGUILayout.EndHorizontal();
 
@@ -103,13 +121,61 @@ public class RotatorEditorWindow : EditorWindow
         EditorGUI.indentLevel--;
         EditorGUILayout.EndToggleGroup();
 
+        serializableObjectTarget.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
         if(GUILayout.Button("Validate Changes"))
         {
             ValidateChanges();
         }
-        
+
+
+        //TODO : selected rotators ?
+        DrawUILine(Color.gray, 1, 5);
+
+        if (rotatorsToEdit?.Count>0)
+        {
+            if(rotatorsToEdit[0]!=null)
+            {
+                showRotatorsToEdit();
+            }
+        }
+    }
+
+    private void showRotatorsToEdit()
+    {
+        /*
+        GUILayout.FlexibleSpace();
+        GUILayout.BeginArea(new Rect(0, 1000, 256, 600));
+        EditorGUILayout.BeginVertical();
+
+        scrollPos = EditorGUILayout.BeginScrollView(scrollPos,false,true,GUILayout.ExpandHeight(true));
+        GUILayout.Button("I am a button", GUILayout.MinWidth(150), GUILayout.MinHeight(150));
+        EditorGUILayout.EndScrollView();
+
+        EditorGUILayout.EndVertical();
+        GUILayout.EndArea();
+        */
+        EditorGUILayout.BeginVertical();
+        scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true));
+        foreach (Rotator rotator in rotatorsToEdit)
+        {
+            if (rotator != null)
+            {
+                //make each of them in a rect
+                SerializedObject so = new SerializedObject(rotator);
+                EditorGUILayout.PropertyField(so.FindProperty("_identifier"), new GUIContent("Identifier"), true);
+                EditorGUILayout.PropertyField(so.FindProperty("_timeBeforeStoppingInSeconds"), new GUIContent("Time before stopping in seconds"), true);
+                EditorGUILayout.PropertyField(so.FindProperty("_shouldReverseRotation"), new GUIContent("Should Reverse Rotation"), true);
+                EditorGUILayout.PropertyField(so.FindProperty("_rotationsSettings"), new GUIContent("Rotations settings"), true);
+                EditorGUILayout.Space();
+
+            }
+
+        }
+        EditorGUILayout.EndScrollView();
+        EditorGUILayout.EndVertical();
+
     }
 
     private void ValidateChanges()

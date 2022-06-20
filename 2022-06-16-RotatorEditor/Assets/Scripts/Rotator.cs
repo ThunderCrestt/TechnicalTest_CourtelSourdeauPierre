@@ -9,18 +9,18 @@ namespace com.technical.test
     public class Rotator : MonoBehaviour
     {
         [SerializeField]
-        private string _identifier = "The Amazing Rotator";
+        public string _identifier = "The Amazing Rotator";
         [Header("Rotation parameters")]
         [SerializeField]
-        private float _timeBeforeStoppingInSeconds = 3;
+        public float _timeBeforeStoppingInSeconds  = 3;
         [SerializeField]
-        private bool _shouldReverseRotation = false;
+        public bool _shouldReverseRotation = false;
 
         [SerializeField]
-        private RotationSettings _rotationsSettings = default;
+        public RotationSettings _rotationsSettings = default;
 
-        private float _angleModifier = 1f;
-        private float _timePassed;
+        public float _angleModifier = 1f;
+        public float _timePassed;
 
         void Awake()
         {
