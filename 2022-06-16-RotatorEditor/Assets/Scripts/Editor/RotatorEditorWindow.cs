@@ -55,15 +55,15 @@ public class RotatorEditorWindow : EditorWindow
 
     //TODO : make undos
     //TODO : when oppened from inspector, set the value from the current rotator;
+    //TODO : warning when field empty and toggle true
     private void OnGUI()
     {
         GUILayout.Label("Rotator Editor Window");
         //we search the SerializedProperty to add a custom list field in the editor window
-
         serializableObjectTarget.Update();
         EditorGUI.BeginChangeCheck();
         EditorGUILayout.PropertyField(listProperty, new GUIContent("Rotators to edit"), true);
-        if(rotatorsToEdit?.Count > 0 && EditorGUI.EndChangeCheck() && rotatorsToEdit[rotatorsToEdit.Count - 1] != null)
+        if (rotatorsToEdit?.Count > 0 && EditorGUI.EndChangeCheck() && rotatorsToEdit[rotatorsToEdit.Count - 1] != null)
         {
             //TODO : update when rotator added maybe with reordable list ?
             identifier = rotatorsToEdit[rotatorsToEdit.Count - 1]._identifier;
@@ -132,11 +132,36 @@ public class RotatorEditorWindow : EditorWindow
         serializableObjectTarget.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
+        //We disable the button if the identifier field is empty, or if the rotator list is empty, or when the object to rotate in rotation setting is empty
+        EditorGUI.BeginDisabledGroup((rotatorsToEdit == null || rotatorsToEdit?.Count<=0 || rotatorsToEdit?[0]==null) 
+                                        || (toggleIdentifier && (identifier == string.Empty || identifier == null)) 
+                                        || (toggleRotationSettings && toggleObjectToRotate && rotationSettings.ObjectToRotate ==null));
         if(GUILayout.Button("Validate Changes"))
         {
             ValidateChanges();
         }
+        EditorGUI.EndDisabledGroup();
 
+        //help boxes
+        if ((rotatorsToEdit == null || rotatorsToEdit?.Count <= 0 || rotatorsToEdit?[0] == null))
+        {
+            EditorGUILayout.HelpBox("Add and set a rotator to modify in the Rotators to edit List", MessageType.Warning);
+        }
+        if (((rotatorsToEdit != null && rotatorsToEdit?.Count > 0 && rotatorsToEdit?[0] != null))
+            &&!toggleAngleRotation && !toggleIdentifier && !toggleObjectToRotate 
+            && !toggleReverseRotation && !toggleRotationSettings 
+            && !toggleTimeBeforeStop && !toggleTimeToRotate)
+        {
+            EditorGUILayout.HelpBox("The rotator will not change, toggle changes with checkboxes", MessageType.Warning);
+        }
+        if ((toggleIdentifier && (identifier == string.Empty || identifier == null)))
+        {
+            EditorGUILayout.HelpBox("Assign a name (identifier) to the rotator", MessageType.Warning);
+        }
+        if ((toggleRotationSettings && toggleObjectToRotate && rotationSettings.ObjectToRotate == null))
+        {
+            EditorGUILayout.HelpBox("Add a object to rotate in the rotation settings", MessageType.Warning);
+        }
 
         //TODO : selected rotators ?
         DrawUILine(Color.gray, 1, 5);
