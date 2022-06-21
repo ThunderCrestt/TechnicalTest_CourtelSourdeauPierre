@@ -63,32 +63,14 @@ public class RotatorEditorWindow : EditorWindow
             EditorGUI.LabelField(rect, "Rotators to edit");
         };
         reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => {
-            var element = reorderableList.serializedProperty.GetArrayElementAtIndex(index);
             rect.y += 2;
-            //EditorGUI.PropertyField(new Rect(rect.x, rect.y, 60, EditorGUIUtility.singleLineHeight),element);
-
-            targetRotator = EditorGUI.ObjectField(new Rect(rect.x + 18, rect.y, rect.width - 18, rect.height), targetRotator, typeof(Rotator)) as Rotator;
-            /*
-            if(targetRotator!=null)
-            {
-                rotatorsToEdit.Add(targetRotator);
-                targetRotator = null;
-            }
-            */
-
+            rotatorsToEdit[index] = EditorGUI.ObjectField(new Rect(rect.x + 18, rect.y, rect.width - 18, rect.height), rotatorsToEdit[index], typeof(Rotator)) as Rotator;
+            //setValuesFromLastRotator();
         };
     }
 
-    /// <summary>
-    /// is called when a value is changed, here is used to update the fields when a rotator is set in the list. we use OnValidate because BeginChangeCheck did not work properly with list.
-    /// </summary>
-    private void OnValidate()
-    {
-        setValuesFromLastRotator();
-    }
-
     //TODO : faire une jolie liste de rotator en bas.
-    //TODO : refaire le setInitial value sans onValidate.
+    //TODO : faire en sorte que les ajout de rotators soit null
     /// <summary>
     /// definitions of the fields, helpBoxes and button
     /// </summary>
@@ -98,7 +80,6 @@ public class RotatorEditorWindow : EditorWindow
         //we search the SerializedProperty to add a custom list field in the editor window
         serializableObjectTarget.Update();
         reorderableList.DoLayoutList();
-        //EditorGUILayout.PropertyField(listProperty, new GUIContent("Rotators to edit"), true);
 
         //draw a separator
         DrawUILine(Color.gray, 1, 5);
@@ -191,7 +172,6 @@ public class RotatorEditorWindow : EditorWindow
         //We disable the button if the identifier field is empty, or if the rotator list is empty, or when the object to rotate in rotation setting is empty
         EditorGUI.BeginDisabledGroup(
             ((rotatorsToEdit != null && rotatorsToEdit?.Count > 0 && rotatorsToEdit?[0] != null) && !toggleIdentifier && !toggleReverseRotation && !toggleRotationSettings && !toggleTimeBeforeStop)
-            || (toggleRotationSettings && (!toggleAngleRotation && !toggleTimeToRotate && !toggleObjectToRotate))
             || (rotatorsToEdit == null || rotatorsToEdit?.Count <= 0 || rotatorsToEdit?[0] == null)
             || (toggleIdentifier && (identifier == string.Empty || identifier == null))
             || (toggleRotationSettings && toggleObjectToRotate && rotationSettings.ObjectToRotate == null)
@@ -209,7 +189,6 @@ public class RotatorEditorWindow : EditorWindow
         }
         if (
             ((rotatorsToEdit != null && rotatorsToEdit?.Count > 0 && rotatorsToEdit?[0] != null) && !toggleIdentifier && !toggleReverseRotation && !toggleRotationSettings && !toggleTimeBeforeStop)
-            || (toggleRotationSettings && (!toggleAngleRotation && !toggleTimeToRotate && !toggleObjectToRotate))
             )
         {
             EditorGUILayout.HelpBox("The rotator will not change, toggle changes with checkboxes", MessageType.Warning);
