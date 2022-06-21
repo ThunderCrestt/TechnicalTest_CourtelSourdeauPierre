@@ -28,7 +28,7 @@ public class RotatorEditorWindow : EditorWindow
     [SerializeField]
     public List<Rotator> rotatorsToEdit = new List<Rotator>();
     ReorderableList reorderableList = null;
-    Rotator targetRotator;
+
     // Scriptable object and variable used for the propertyField
     ScriptableObject target;
     SerializedObject serializableObjectTarget;
@@ -64,8 +64,12 @@ public class RotatorEditorWindow : EditorWindow
         };
         reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => {
             rect.y += 2;
+            EditorGUI.BeginChangeCheck();
             rotatorsToEdit[index] = EditorGUI.ObjectField(new Rect(rect.x + 18, rect.y, rect.width - 18, rect.height), rotatorsToEdit[index], typeof(Rotator)) as Rotator;
-            //setValuesFromLastRotator();
+            if(EditorGUI.EndChangeCheck())
+            {
+                setValuesFromLastRotator();
+            }
         };
     }
 
