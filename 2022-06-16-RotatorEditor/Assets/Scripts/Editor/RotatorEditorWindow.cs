@@ -21,8 +21,8 @@ public class RotatorEditorWindow : EditorWindow
     [SerializeField]
     string identifier;
     [SerializeField]
-    float timeBeforeStop;
-    bool reverseRotation;
+    float timeBeforeStopping;
+    bool shouldReverseRotation;
     [SerializeField]
     RotationSettings rotationSettings;
 
@@ -82,6 +82,8 @@ public class RotatorEditorWindow : EditorWindow
 
     }
 
+    //TODO : prefab instance doesn't change when play button is launched.
+
     /// <summary>
     /// definitions of the fields, helpBoxes and button
     /// </summary>
@@ -127,12 +129,12 @@ public class RotatorEditorWindow : EditorWindow
             toggleTimeBeforeStop = EditorGUILayout.BeginToggleGroup("Time before Stopping in Seconds :", toggleTimeBeforeStop);
                 // float field with undo
                 EditorGUI.BeginChangeCheck();
-                    float newTimeBeforeStop = timeBeforeStop;
-                    newTimeBeforeStop = EditorGUILayout.FloatField(" ", timeBeforeStop,GUILayout.ExpandWidth(true));
+                    float newTimeBeforeStop = timeBeforeStopping;
+                    newTimeBeforeStop = EditorGUILayout.FloatField(" ", timeBeforeStopping,GUILayout.ExpandWidth(true));
                 if (EditorGUI.EndChangeCheck())
                 {
                     Undo.RecordObject(this, "timeBeforeStop Undo");
-                    timeBeforeStop = newTimeBeforeStop;
+                    timeBeforeStopping = newTimeBeforeStop;
                 }
             EditorGUILayout.EndToggleGroup();
         EditorGUILayout.EndHorizontal();
@@ -140,7 +142,7 @@ public class RotatorEditorWindow : EditorWindow
         //the Should Reverse Rotation field in a toggle group
         EditorGUILayout.BeginHorizontal();
             toggleReverseRotation = EditorGUILayout.BeginToggleGroup("Should Reverse Rotation :", toggleReverseRotation);
-                reverseRotation = EditorGUILayout.Toggle(" ", reverseRotation);
+                shouldReverseRotation = EditorGUILayout.Toggle(" ", shouldReverseRotation);
             EditorGUILayout.EndToggleGroup();
         EditorGUILayout.EndHorizontal();
         #endregion
@@ -315,22 +317,28 @@ public class RotatorEditorWindow : EditorWindow
         /// </summary>
     private void ValidateChanges()
     {
+        serializableObjectTarget.Update();
         // for each rotator wich are not null, we apply the changes if the toggle concerned is true
         foreach (Rotator rotator in rotatorsToEdit)
         {
             if (rotator != null)
             {
-                if (toggleIdentifier) { rotator._identifier = identifier; }
-                if (toggleTimeBeforeStop) { rotator._timeBeforeStoppingInSeconds = timeBeforeStop; }
-                if (toggleReverseRotation) { rotator._shouldReverseRotation = reverseRotation; }
+                //we have to change the value of the variable trough rotatorSerializedObject.FindProperty so the instance of the prefab can be modify.
+                SerializedObject rotatorSerializedObject = new SerializedObject(rotator);
+                rotatorSerializedObject.Update();
+                if (toggleIdentifier) { rotatorSerializedObject.FindProperty("_identifier").stringValue = identifier; }
+                if (toggleTimeBeforeStop) { rotatorSerializedObject.FindProperty("_timeBeforeStoppingInSeconds").floatValue = timeBeforeStopping; }
+                if (toggleReverseRotation) { rotatorSerializedObject.FindProperty("_shouldReverseRotation").boolValue = shouldReverseRotation; }
                 if (toggleRotationSettings)
                 {
-                    if (toggleObjectToRotate) rotator._rotationsSettings.ObjectToRotate = rotationSettings.ObjectToRotate;
-                    if (toggleAngleRotation) rotator._rotationsSettings.AngleRotation = rotationSettings.AngleRotation;
-                    if (toggleTimeToRotate) rotator._rotationsSettings.TimeToRotateInSeconds = rotationSettings.TimeToRotateInSeconds;
+                    if (toggleObjectToRotate) rotatorSerializedObject.FindProperty("_rotationsSettings").FindPropertyRelative("ObjectToRotate").objectReferenceValue=rotationSettings.ObjectToRotate;
+                    if (toggleAngleRotation) rotatorSerializedObject.FindProperty("_rotationsSettings").FindPropertyRelative("AngleRotation").vector3Value=rotationSettings.AngleRotation;
+                    if (toggleTimeToRotate) rotatorSerializedObject.FindProperty("_rotationsSettings").FindPropertyRelative("TimeToRotateInSeconds").floatValue=rotationSettings.TimeToRotateInSeconds;
                 }
+                rotatorSerializedObject.ApplyModifiedProperties();
             }
         }
+
         Repaint();
     }
 
@@ -342,10 +350,13 @@ public class RotatorEditorWindow : EditorWindow
         //is used when a rotator is add, or if the window is opened from the inspector
         if (rotatorsToEdit?.Count > 0 && rotatorsToEdit[rotatorsToEdit.Count - 1] != null)
         {
-            identifier = rotatorsToEdit[rotatorsToEdit.Count - 1]._identifier;
-            timeBeforeStop = rotatorsToEdit[rotatorsToEdit.Count - 1]._timeBeforeStoppingInSeconds;
-            reverseRotation = rotatorsToEdit[rotatorsToEdit.Count - 1]._shouldReverseRotation;
-            rotationSettings = rotatorsToEdit[rotatorsToEdit.Count - 1]._rotationsSettings;
+            SerializedObject rotatorSerializedObject = new SerializedObject(rotatorsToEdit[rotatorsToEdit.Count - 1]);
+            identifier = rotatorSerializedObject.FindProperty("_identifier").stringValue;
+            timeBeforeStopping = rotatorSerializedObject.FindProperty("_timeBeforeStoppingInSeconds").floatValue;
+            shouldReverseRotation = rotatorSerializedObject.FindProperty("_shouldReverseRotation").boolValue;
+            rotationSettings.ObjectToRotate = (Transform)rotatorSerializedObject.FindProperty("_rotationsSettings").FindPropertyRelative("ObjectToRotate").objectReferenceValue;
+            rotationSettings.AngleRotation = rotatorSerializedObject.FindProperty("_rotationsSettings").FindPropertyRelative("AngleRotation").vector3Value;
+            rotationSettings.TimeToRotateInSeconds = rotatorSerializedObject.FindProperty("_rotationsSettings").FindPropertyRelative("TimeToRotateInSeconds").floatValue;
             Repaint();
         }
     }
