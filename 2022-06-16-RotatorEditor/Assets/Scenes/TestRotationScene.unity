@@ -359,13 +359,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2bb7e1fa31ba5d942bf3081ccd5b06ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _identifier: The Amazing Rotator
+  _identifier: Custom Super Rotator
   _timeBeforeStoppingInSeconds: 15
   _shouldReverseRotation: 0
   _rotationsSettings:
     ObjectToRotate: {fileID: 257649626}
-    AngleRotation: {x: 90, y: 45, z: 20}
-    TimeToRotateInSeconds: 1.5
+    AngleRotation: {x: 45, y: 90, z: 45}
+    TimeToRotateInSeconds: 0.8
 --- !u!136 &257649623
 CapsuleCollider:
   m_ObjectHideFlags: 0
