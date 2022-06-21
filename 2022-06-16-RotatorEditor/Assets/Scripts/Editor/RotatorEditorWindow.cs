@@ -4,8 +4,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
 using com.technical.test;
-
-//this script manage the editor window for rotators
+/// <summary>
+/// this script manages the editor window for rotators
+/// </summary>
 public class RotatorEditorWindow : EditorWindow
 {
     //the several toggles to display and manage checkboxes
@@ -81,9 +82,6 @@ public class RotatorEditorWindow : EditorWindow
 
 
     }
-
-    //TODO : prefab instance doesn't change when play button is launched.
-
     /// <summary>
     /// definitions of the fields, helpBoxes and button
     /// </summary>
@@ -98,7 +96,7 @@ public class RotatorEditorWindow : EditorWindow
         //apply the modification in the reorderableList
 
         //draw a separator
-        DrawUILine(Color.gray, 1, 5);
+        DrawSeperator(Color.gray, 1, 5);
         #endregion
 
         #region rotator field
@@ -149,7 +147,7 @@ public class RotatorEditorWindow : EditorWindow
 
         #region rotation settings field
 
-        //the rotation settings in a toggle group with each of it's property in a toggle group
+        //the rotation settings in a toggle group with each of its properties in a toggle group
         SerializedProperty rotationsSettings = serializableObjectTarget.FindProperty("rotationSettings");
         toggleRotationSettings = EditorGUILayout.BeginToggleGroup("V rotation Settings :", toggleRotationSettings);
             EditorGUI.indentLevel++;
@@ -237,7 +235,7 @@ public class RotatorEditorWindow : EditorWindow
         }
 
         //a separator
-        DrawUILine(Color.gray, 1, 5);
+        DrawSeperator(Color.gray, 1, 5);
         #endregion
 
         #region display of the rotators
@@ -259,7 +257,7 @@ public class RotatorEditorWindow : EditorWindow
     private void showRotatorsToEdit()
     {
 
-        //we create a vertical layout to contains several rows
+        //we create a vertical layout to contain several rows
         EditorGUILayout.BeginVertical();
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true));
 
@@ -277,11 +275,11 @@ public class RotatorEditorWindow : EditorWindow
                 {
                     if (increment % 2 == 0)
                     {
-                        //to create an other row when the previous one contains 2 rotators to display, GUILayout.Width(Screen.width) so it take all the space available
+                        //to create another row when the previous one contains 2 rotators to display, GUILayout.Width(Screen.width) so it takes all the space available
                         EditorGUILayout.BeginHorizontal(GUILayout.Width(Screen.width));
                     }
 
-                    //GUILayout.Width(Screen.width/2) so it take half of the available space, so 2 rotator can be displayed on the same row
+                    //GUILayout.Width(Screen.width/2) so it takes half of the available space, so 2 rotator can be displayed on the same row
                     EditorGUILayout.BeginVertical(GUILayout.Width(Screen.width / 2));
                         if (rotator != null)
                         {
@@ -299,13 +297,14 @@ public class RotatorEditorWindow : EditorWindow
                     {
                         //end of the row
                         EditorGUILayout.EndHorizontal();
-                        DrawUILine(Color.gray, 2, 10, 0.8f);
+                        DrawSeperator(Color.gray, 2, 10, 0.8f);
 
                     }
                     increment++;
                 }
                 if (increment % 2 !=0)
                 {
+                    //final end of the row
                     EditorGUILayout.EndHorizontal();
                 }
             EditorGUILayout.EndScrollView();
@@ -318,12 +317,12 @@ public class RotatorEditorWindow : EditorWindow
     private void ValidateChanges()
     {
         serializableObjectTarget.Update();
-        // for each rotator wich are not null, we apply the changes if the toggle concerned is true
+        // for each rotator which are not null, we apply the changes if the toggle concerned is true
         foreach (Rotator rotator in rotatorsToEdit)
         {
             if (rotator != null)
             {
-                //we have to change the value of the variable trough rotatorSerializedObject.FindProperty so the instance of the prefab can be modify.
+                //we have to change the value of the variable trough rotatorSerializedObject.FindProperty so the instance of the prefab can be modified.
                 SerializedObject rotatorSerializedObject = new SerializedObject(rotator);
                 rotatorSerializedObject.Update();
                 if (toggleIdentifier) { rotatorSerializedObject.FindProperty("_identifier").stringValue = identifier; }
@@ -347,7 +346,7 @@ public class RotatorEditorWindow : EditorWindow
     /// </summary>
     public void setValuesFromLastRotator()
     {
-        //is used when a rotator is add, or if the window is opened from the inspector
+        //is used when a rotator is added, or if the window is opened from the inspector
         if (rotatorsToEdit?.Count > 0 && rotatorsToEdit[rotatorsToEdit.Count - 1] != null)
         {
             SerializedObject rotatorSerializedObject = new SerializedObject(rotatorsToEdit[rotatorsToEdit.Count - 1]);
@@ -365,18 +364,17 @@ public class RotatorEditorWindow : EditorWindow
     /// Draw a line to separate content
     /// </summary>
     /// <param name="color"> the color of the line </param>
-    /// <param name="thickness"> the ththickness of the line </param>
+    /// <param name="thickness"> the thickness of the line </param>
     /// <param name="padding">the padding between the next section and the current one</param>
     /// <param name="percentOfScreenEmpty"> the percent of empty screen we want on the separator, 0 -> the separator take all the width of the window </param>
-    public static void DrawUILine(Color color, int thickness = 2, int padding = 10, float percentOfScreenEmpty=0f)
+    public static void DrawSeperator(Color color, int thickness = 2, int padding = 10, float percentOfScreenEmpty=0f)
     {
-        Rect r = EditorGUILayout.GetControlRect(GUILayout.Height(padding + thickness));
-        r.height = thickness;
-        r.y += padding / 2;
-        //r.x -= 2;
-        r.x = percentOfScreenEmpty * Screen.width;
-        r.width =(1f-2*percentOfScreenEmpty)*Screen.width;
-        EditorGUI.DrawRect(r, color);
+        Rect rect = EditorGUILayout.GetControlRect(GUILayout.Height(padding + thickness));
+        rect.height = thickness;
+        rect.y += padding / 2;
+        rect.x = percentOfScreenEmpty * Screen.width;
+        rect.width =(1f-2*percentOfScreenEmpty)*Screen.width;
+        EditorGUI.DrawRect(rect, color);
         EditorGUILayout.Space();
     }
 

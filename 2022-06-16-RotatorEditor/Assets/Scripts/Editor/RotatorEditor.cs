@@ -19,7 +19,7 @@ public class RotatorEditor : Editor
     }
 
     /// <summary>
-    /// we ovveride the inspector gui to change what the inspector editor looks like, we just add a button
+    /// we override the inspector gui to change what the inspector editor looks like, we just add a button
     /// </summary>
     /// 
     public override void OnInspectorGUI()
