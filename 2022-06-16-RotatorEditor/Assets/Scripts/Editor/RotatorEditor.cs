@@ -29,7 +29,7 @@ public class RotatorEditor : Editor
         //the button to open the editor window that is created in RotatorEditorWindow
         if (GUILayout.Button("open editor window"))
         {
-            RotatorEditorWindow editorWindow= RotatorEditorWindow.ShowWindow();
+            RotatorEditorWindow editorWindow = RotatorEditorWindow.ShowWindow();
             //if we open the window from the inspector, the default values are from the selected rotator 
             editorWindow.rotatorsToEdit.Add(rotator);
             editorWindow.setValuesFromLastRotator();

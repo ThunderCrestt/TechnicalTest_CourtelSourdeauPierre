@@ -16,7 +16,9 @@ public class RotatorEditorWindow : EditorWindow
     bool toggleTimeToRotate;
 
     //the variables of the rotator
+    [SerializeField]
     string identifier;
+    [SerializeField]
     float timeBeforeStop;
     bool reverseRotation;
     [SerializeField]
@@ -25,39 +27,56 @@ public class RotatorEditorWindow : EditorWindow
     //the rotators list
     [SerializeField]
     public List<Rotator> rotatorsToEdit = new List<Rotator>();
-
-    //
+    ReorderableList reorderableList = null;
+    Rotator targetRotator;
+    // Scriptable object and variable used for the propertyField
     ScriptableObject target;
     SerializedObject serializableObjectTarget;
     SerializedProperty listProperty;
 
+    //Used in the scroll view in the rotators display
     Vector2 scrollPos = Vector2.zero;
 
+    //create the menu item in the specified path
     [MenuItem("Window/Custom/ Rotators Multiple Setter")]
-
     /// <summary>
     /// open the editor window, returns itself to pass initial values when opened from inspector.
     /// </summary>
     public static RotatorEditorWindow ShowWindow()
     {
-         return GetWindow(typeof(RotatorEditorWindow)) as RotatorEditorWindow;
+        return GetWindow(typeof(RotatorEditorWindow)) as RotatorEditorWindow;
     }
 
-
     /// <summary>
-    /// Draw a line to separate content
+    /// work like an init, here we just define the SerializedObject to use find property to find the rotatorsToEdit list
     /// </summary>
-    /// <param name="color"> the color of the line </param>
-    /// <param name="thickness"> the ththickness of the line </param>
-    /// <param name="padding">the padding between the next section and the current one</param>
-    public static void DrawUILine(Color color, int thickness = 2, int padding = 10)
+    private void OnEnable()
     {
-        Rect r = EditorGUILayout.GetControlRect(GUILayout.Height(padding + thickness));
-        r.height = thickness;
-        r.y += padding / 2;
-        r.x -= 2;
-        r.width += 6;
-        EditorGUI.DrawRect(r, color);
+        target = this;
+        serializableObjectTarget = new SerializedObject(target);
+        listProperty = serializableObjectTarget.FindProperty("rotatorsToEdit");
+        this.minSize = new Vector2(600, 550);
+
+        reorderableList = new ReorderableList(serializableObjectTarget, listProperty, true, true, true, true);
+        reorderableList.drawHeaderCallback = (Rect rect) =>
+        {
+            EditorGUI.LabelField(rect, "Rotators to edit");
+        };
+        reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => {
+            var element = reorderableList.serializedProperty.GetArrayElementAtIndex(index);
+            rect.y += 2;
+            //EditorGUI.PropertyField(new Rect(rect.x, rect.y, 60, EditorGUIUtility.singleLineHeight),element);
+
+            targetRotator = EditorGUI.ObjectField(new Rect(rect.x + 18, rect.y, rect.width - 18, rect.height), targetRotator, typeof(Rotator)) as Rotator;
+            /*
+            if(targetRotator!=null)
+            {
+                rotatorsToEdit.Add(targetRotator);
+                targetRotator = null;
+            }
+            */
+
+        };
     }
 
     /// <summary>
@@ -68,19 +87,8 @@ public class RotatorEditorWindow : EditorWindow
         setValuesFromLastRotator();
     }
 
-    /// <summary>
-    /// work like an init, here we just define the SerializedObject to use find property to find the rotatorsToEdit list
-    /// </summary>
-    private void OnEnable()
-    {
-       target = this;
-       serializableObjectTarget = new SerializedObject(target);
-       listProperty = serializableObjectTarget.FindProperty("rotatorsToEdit");
-    }
-
-    //TODO : make undos
     //TODO : faire une jolie liste de rotator en bas.
-
+    //TODO : refaire le setInitial value sans onValidate.
     /// <summary>
     /// definitions of the fields, helpBoxes and button
     /// </summary>
@@ -89,14 +97,15 @@ public class RotatorEditorWindow : EditorWindow
         GUILayout.Label("Rotator Editor Window");
         //we search the SerializedProperty to add a custom list field in the editor window
         serializableObjectTarget.Update();
-        EditorGUILayout.PropertyField(listProperty, new GUIContent("Rotators to edit"), true);
+        reorderableList.DoLayoutList();
+        //EditorGUILayout.PropertyField(listProperty, new GUIContent("Rotators to edit"), true);
 
         //draw a separator
-        DrawUILine(Color.gray,1,5);
+        DrawUILine(Color.gray, 1, 5);
 
         GUILayout.BeginHorizontal();
         GUILayout.FlexibleSpace();
-        GUILayout.Label("Editor");
+        GUILayout.Label("Editor", EditorStyles.boldLabel);
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
 
@@ -104,20 +113,27 @@ public class RotatorEditorWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         toggleIdentifier = EditorGUILayout.BeginToggleGroup("Identifier :", toggleIdentifier);
         EditorGUI.BeginChangeCheck();
-        string newIdentifier = EditorGUILayout.TextField(" ", identifier);
-        if(EditorGUI.EndChangeCheck())
+        string newIdentifier = identifier;
+        newIdentifier = EditorGUILayout.TextField(" ", identifier);
+        if (EditorGUI.EndChangeCheck())
         {
-            Undo.RecordObject(this, "change identifier");
+            Undo.RecordObject(this, "identifier Undo");
             identifier = newIdentifier;
-            serializableObjectTarget.Update();
         }
         EditorGUILayout.EndToggleGroup();
         EditorGUILayout.EndHorizontal();
 
         //the Time before Stopping in Seconds field in a toggle group
         EditorGUILayout.BeginHorizontal();
-        toggleTimeBeforeStop = EditorGUILayout.BeginToggleGroup("Time before Stopping in Seconds :",toggleTimeBeforeStop);
-        timeBeforeStop = EditorGUILayout.FloatField(" ", timeBeforeStop);
+        toggleTimeBeforeStop = EditorGUILayout.BeginToggleGroup("Time before Stopping in Seconds :", toggleTimeBeforeStop);
+        EditorGUI.BeginChangeCheck();
+        float newTimeBeforeStop = timeBeforeStop;
+        newTimeBeforeStop = EditorGUILayout.FloatField(" ", timeBeforeStop);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(this, "timeBeforeStop Undo");
+            timeBeforeStop = newTimeBeforeStop;
+        }
         EditorGUILayout.EndToggleGroup();
         EditorGUILayout.EndHorizontal();
 
@@ -133,23 +149,38 @@ public class RotatorEditorWindow : EditorWindow
         toggleRotationSettings = EditorGUILayout.BeginToggleGroup("V rotation Settings :", toggleRotationSettings);
         EditorGUI.indentLevel++;
 
-            EditorGUILayout.BeginHorizontal();
-            toggleObjectToRotate = EditorGUILayout.BeginToggleGroup("object to rotate :", toggleObjectToRotate);
-            EditorGUILayout.PropertyField(rotationsSettings.FindPropertyRelative("ObjectToRotate"), GUIContent.none, true);
-            EditorGUILayout.EndToggleGroup();
-            EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        toggleObjectToRotate = EditorGUILayout.BeginToggleGroup("object to rotate :", toggleObjectToRotate);
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(rotationsSettings.FindPropertyRelative("ObjectToRotate"), GUIContent.none, true);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(this, "object to rotate Undo");
+        }
+        EditorGUILayout.EndToggleGroup();
+        EditorGUILayout.EndHorizontal();
 
-            EditorGUILayout.BeginHorizontal();
-            toggleAngleRotation = EditorGUILayout.BeginToggleGroup("Angle Rotation :", toggleAngleRotation);
-            EditorGUILayout.PropertyField(rotationsSettings.FindPropertyRelative("AngleRotation"), GUIContent.none, true);
-            EditorGUILayout.EndToggleGroup();
-            EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        toggleAngleRotation = EditorGUILayout.BeginToggleGroup("Angle Rotation :", toggleAngleRotation);
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(rotationsSettings.FindPropertyRelative("AngleRotation"), GUIContent.none, true);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(this, "Angle Rotation Undo");
+        }
+        EditorGUILayout.EndToggleGroup();
+        EditorGUILayout.EndHorizontal();
 
-            EditorGUILayout.BeginHorizontal();
-            toggleTimeToRotate = EditorGUILayout.BeginToggleGroup("Time to Rotate in Seconds :", toggleTimeToRotate);
-            EditorGUILayout.PropertyField(rotationsSettings.FindPropertyRelative("TimeToRotateInSeconds"), GUIContent.none, true);
-            EditorGUILayout.EndToggleGroup();
-            EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginHorizontal();
+        toggleTimeToRotate = EditorGUILayout.BeginToggleGroup("Time to Rotate in Seconds :", toggleTimeToRotate);
+        EditorGUI.BeginChangeCheck();
+        EditorGUILayout.PropertyField(rotationsSettings.FindPropertyRelative("TimeToRotateInSeconds"), GUIContent.none, true);
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(this, "Time to Rotate in Seconds Undo");
+        }
+        EditorGUILayout.EndToggleGroup();
+        EditorGUILayout.EndHorizontal();
 
         EditorGUI.indentLevel--;
         EditorGUILayout.EndToggleGroup();
@@ -160,12 +191,12 @@ public class RotatorEditorWindow : EditorWindow
         //We disable the button if the identifier field is empty, or if the rotator list is empty, or when the object to rotate in rotation setting is empty
         EditorGUI.BeginDisabledGroup(
             ((rotatorsToEdit != null && rotatorsToEdit?.Count > 0 && rotatorsToEdit?[0] != null) && !toggleIdentifier && !toggleReverseRotation && !toggleRotationSettings && !toggleTimeBeforeStop)
-            || (toggleRotationSettings &&(!toggleAngleRotation && !toggleTimeToRotate && !toggleObjectToRotate))
-            || (rotatorsToEdit == null || rotatorsToEdit?.Count<=0 || rotatorsToEdit?[0]==null) 
-            || (toggleIdentifier && (identifier == string.Empty || identifier == null)) 
-            || (toggleRotationSettings && toggleObjectToRotate && rotationSettings.ObjectToRotate ==null)
+            || (toggleRotationSettings && (!toggleAngleRotation && !toggleTimeToRotate && !toggleObjectToRotate))
+            || (rotatorsToEdit == null || rotatorsToEdit?.Count <= 0 || rotatorsToEdit?[0] == null)
+            || (toggleIdentifier && (identifier == string.Empty || identifier == null))
+            || (toggleRotationSettings && toggleObjectToRotate && rotationSettings.ObjectToRotate == null)
                                         );
-        if(GUILayout.Button("Validate Changes"))
+        if (GUILayout.Button("Validate Changes"))
         {
             ValidateChanges();
         }
@@ -194,9 +225,9 @@ public class RotatorEditorWindow : EditorWindow
 
         DrawUILine(Color.gray, 1, 5);
 
-        if (rotatorsToEdit?.Count>0)
+        if (rotatorsToEdit?.Count > 0)
         {
-            if(rotatorsToEdit[0]!=null)
+            if (rotatorsToEdit[0] != null)
             {
                 showRotatorsToEdit();
             }
@@ -210,14 +241,6 @@ public class RotatorEditorWindow : EditorWindow
     {
         if (rotatorsToEdit?.Count > 0 && rotatorsToEdit[rotatorsToEdit.Count - 1] != null)
         {
-
-            toggleIdentifier = false;
-            toggleTimeBeforeStop = false;
-            toggleReverseRotation = false;
-            toggleRotationSettings = false;
-            toggleObjectToRotate = false;
-            toggleAngleRotation = false;
-            toggleTimeToRotate = false;
             identifier = rotatorsToEdit[rotatorsToEdit.Count - 1]._identifier;
             timeBeforeStop = rotatorsToEdit[rotatorsToEdit.Count - 1]._timeBeforeStoppingInSeconds;
             reverseRotation = rotatorsToEdit[rotatorsToEdit.Count - 1]._shouldReverseRotation;
@@ -234,7 +257,7 @@ public class RotatorEditorWindow : EditorWindow
     private void showRotatorsToEdit()
     {
         EditorGUILayout.BeginVertical();
-        scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true));
+        scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(false));
         foreach (Rotator rotator in rotatorsToEdit)
         {
             if (rotator != null)
@@ -266,7 +289,7 @@ public class RotatorEditorWindow : EditorWindow
                 if (toggleIdentifier) { rotator._identifier = identifier; }
                 if (toggleTimeBeforeStop) { rotator._timeBeforeStoppingInSeconds = timeBeforeStop; }
                 if (toggleReverseRotation) { rotator._shouldReverseRotation = reverseRotation; }
-                if (toggleRotationSettings) 
+                if (toggleRotationSettings)
                 {
                     if (toggleObjectToRotate) rotator._rotationsSettings.ObjectToRotate = rotationSettings.ObjectToRotate;
                     if (toggleAngleRotation) rotator._rotationsSettings.AngleRotation = rotationSettings.AngleRotation;
@@ -276,4 +299,22 @@ public class RotatorEditorWindow : EditorWindow
         }
         Repaint();
     }
+
+    /// <summary>
+    /// Draw a line to separate content
+    /// </summary>
+    /// <param name="color"> the color of the line </param>
+    /// <param name="thickness"> the ththickness of the line </param>
+    /// <param name="padding">the padding between the next section and the current one</param>
+    public static void DrawUILine(Color color, int thickness = 2, int padding = 10)
+    {
+        Rect r = EditorGUILayout.GetControlRect(GUILayout.Height(padding + thickness));
+        r.height = thickness;
+        r.y += padding / 2;
+        r.x -= 2;
+        r.width += 6;
+        EditorGUI.DrawRect(r, color);
+    }
+
+
 }
