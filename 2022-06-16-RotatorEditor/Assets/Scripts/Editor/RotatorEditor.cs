@@ -10,6 +10,7 @@ using com.technical.test;
 [CustomEditor(typeof(Rotator))]
 public class RotatorEditor : Editor
 {
+    //the current rotator selected in the inspector
     Rotator rotator;
     public void OnEnable()
     {
