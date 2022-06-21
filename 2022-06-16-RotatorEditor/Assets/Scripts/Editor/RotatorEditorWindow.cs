@@ -291,8 +291,6 @@ public class RotatorEditorWindow : EditorWindow
 
         }
         //GUI.EndGroup();
-        EditorGUILayout.EndVertical();
-
         EditorGUILayout.EndScrollView();
         EditorGUILayout.EndVertical();
 
