@@ -74,8 +74,6 @@ public class RotatorEditorWindow : EditorWindow
         };
     }
 
-    //TODO : faire une jolie liste de rotator en bas.
-    //TODO : faire en sorte que les ajout de rotators soit null
     /// <summary>
     /// definitions of the fields, helpBoxes and button
     /// </summary>
@@ -89,12 +87,13 @@ public class RotatorEditorWindow : EditorWindow
         //draw a separator
         DrawUILine(Color.gray, 1, 5);
 
+        EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(false),GUILayout.Width(Screen.width));
 
-        GUILayout.BeginHorizontal();
+        EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUILayout.Label("Editor", EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
-        GUILayout.EndHorizontal();
+        EditorGUILayout.EndHorizontal();
 
         //the identifier field in a toggle group
         EditorGUILayout.BeginHorizontal();
@@ -219,6 +218,7 @@ public class RotatorEditorWindow : EditorWindow
                 showRotatorsToEdit();
             }
         }
+        EditorGUILayout.EndVertical();
     }
 
     /// <summary>
@@ -247,7 +247,7 @@ public class RotatorEditorWindow : EditorWindow
 
         EditorGUILayout.BeginVertical();
         //GUI.BeginGroup(new Rect(0, 0, Screen.width, Screen.height));
-        scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(false));
+        scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true));
 
         GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
@@ -260,17 +260,16 @@ public class RotatorEditorWindow : EditorWindow
         int increment = 0;
         foreach (Rotator rotator in rotatorsToEdit)
         {
-            if (increment%2!=1)
+            if (increment%2==0)
             {
-                Debug.Log(increment);
                 //to create an other row when the previous one contains 2 rotators to display, GUILayout.Width(Screen.width) so it take all the space available
                 EditorGUILayout.BeginHorizontal(GUILayout.Width(Screen.width));
 
-                //EditorGUI.DrawRect(new Rect(increment%2*Screen.width/2, 100, 100, 100), Color.white);
                 //GUI.Box(new Rect(increment % 2 * Screen.width / 2, 100, 100, 100), "truc machin");
             }
             //GUILayout.Width(Screen.width/2) so it take half of the available space
             EditorGUILayout.BeginVertical(GUILayout.Width(Screen.width/2));
+
             if (rotator != null)
             {
                 SerializedObject so = new SerializedObject(rotator);
@@ -286,6 +285,8 @@ public class RotatorEditorWindow : EditorWindow
             {
                 //end of the row
                 EditorGUILayout.EndHorizontal();
+                DrawUILine(Color.gray, 2, 10, 0.8f);
+
             }
             increment++;
 
@@ -325,13 +326,14 @@ public class RotatorEditorWindow : EditorWindow
     /// <param name="color"> the color of the line </param>
     /// <param name="thickness"> the ththickness of the line </param>
     /// <param name="padding">the padding between the next section and the current one</param>
-    public static void DrawUILine(Color color, int thickness = 2, int padding = 10)
+    public static void DrawUILine(Color color, int thickness = 2, int padding = 10, float percentOfScreenEmpty=0f)
     {
         Rect r = EditorGUILayout.GetControlRect(GUILayout.Height(padding + thickness));
         r.height = thickness;
         r.y += padding / 2;
-        r.x -= 2;
-        r.width += 6;
+        //r.x -= 2;
+        r.x = percentOfScreenEmpty * Screen.width;
+        r.width =(1f-2*percentOfScreenEmpty)*Screen.width;
         EditorGUI.DrawRect(r, color);
         EditorGUILayout.Space();
     }
