@@ -56,7 +56,7 @@ public class RotatorEditorWindow : EditorWindow
         target = this;
         serializableObjectTarget = new SerializedObject(target);
         listProperty = serializableObjectTarget.FindProperty("rotatorsToEdit");
-        this.minSize = new Vector2(600, 600);
+        this.minSize = new Vector2(800, 650);
 
         reorderableList = new ReorderableList(serializableObjectTarget, listProperty, true, true, true, true);
         reorderableList.drawHeaderCallback = (Rect rect) =>
@@ -72,6 +72,8 @@ public class RotatorEditorWindow : EditorWindow
                 setValuesFromLastRotator();
             }
         };
+
+
     }
 
     /// <summary>
@@ -114,7 +116,7 @@ public class RotatorEditorWindow : EditorWindow
             toggleTimeBeforeStop = EditorGUILayout.BeginToggleGroup("Time before Stopping in Seconds :", toggleTimeBeforeStop);
                 EditorGUI.BeginChangeCheck();
                     float newTimeBeforeStop = timeBeforeStop;
-                    newTimeBeforeStop = EditorGUILayout.FloatField(" ", timeBeforeStop);
+                    newTimeBeforeStop = EditorGUILayout.FloatField(" ", timeBeforeStop,GUILayout.ExpandWidth(true));
                 if (EditorGUI.EndChangeCheck())
                 {
                     Undo.RecordObject(this, "timeBeforeStop Undo");
@@ -232,7 +234,6 @@ public class RotatorEditorWindow : EditorWindow
             timeBeforeStop = rotatorsToEdit[rotatorsToEdit.Count - 1]._timeBeforeStoppingInSeconds;
             reverseRotation = rotatorsToEdit[rotatorsToEdit.Count - 1]._shouldReverseRotation;
             rotationSettings = rotatorsToEdit[rotatorsToEdit.Count - 1]._rotationsSettings;
-            Debug.Log("changes");
             Repaint();
         }
     }
@@ -247,60 +248,65 @@ public class RotatorEditorWindow : EditorWindow
 
         EditorGUILayout.BeginVertical();
         //GUI.BeginGroup(new Rect(0, 0, Screen.width, Screen.height));
-        scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true));
+            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, false, true, GUILayout.ExpandHeight(true));
 
-        GUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            GUILayout.Label("Rotator display", EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-        GUILayout.EndHorizontal();
-        EditorGUILayout.Space();
-        EditorGUILayout.Space();
+                EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label("Rotator display", EditorStyles.boldLabel);
+                    GUILayout.FlexibleSpace();
+                EditorGUILayout.EndHorizontal();
 
-        int increment = 0;
-        foreach (Rotator rotator in rotatorsToEdit)
-        {
-            if (increment%2==0)
-            {
-                //to create an other row when the previous one contains 2 rotators to display, GUILayout.Width(Screen.width) so it take all the space available
-                EditorGUILayout.BeginHorizontal(GUILayout.Width(Screen.width));
-
-                //GUI.Box(new Rect(increment % 2 * Screen.width / 2, 100, 100, 100), "truc machin");
-            }
-            //GUILayout.Width(Screen.width/2) so it take half of the available space
-            EditorGUILayout.BeginVertical(GUILayout.Width(Screen.width/2));
-
-            if (rotator != null)
-            {
-                SerializedObject so = new SerializedObject(rotator);
-                EditorGUILayout.PropertyField(so.FindProperty("_identifier"), new GUIContent("Identifier"), true);
-                EditorGUILayout.PropertyField(so.FindProperty("_timeBeforeStoppingInSeconds"), new GUIContent("Time before stopping"), true);
-                EditorGUILayout.PropertyField(so.FindProperty("_shouldReverseRotation"), new GUIContent("Should Reverse Rotation"), true);
-                EditorGUILayout.PropertyField(so.FindProperty("_rotationsSettings"), new GUIContent("Rotations settings"), true);
+                EditorGUILayout.Space();
                 EditorGUILayout.Space();
 
-            }
-            EditorGUILayout.EndVertical();
-            if (increment % 2 != 0)
-            {
-                //end of the row
-                EditorGUILayout.EndHorizontal();
-                DrawUILine(Color.gray, 2, 10, 0.8f);
+                int increment = 0;
+                foreach (Rotator rotator in rotatorsToEdit)
+                {
+                    if (increment % 2 == 0)
+                    {
+                        //to create an other row when the previous one contains 2 rotators to display, GUILayout.Width(Screen.width) so it take all the space available
+                        EditorGUILayout.BeginHorizontal(GUILayout.Width(Screen.width));
 
-            }
-            increment++;
+                        //GUI.Box(new Rect(increment % 2 * Screen.width / 2, 100, 100, 100), "truc machin");
+                    }
 
-        }
-        //GUI.EndGroup();
-        EditorGUILayout.EndScrollView();
+                    //GUILayout.Width(Screen.width/2) so it take half of the available space
+                    EditorGUILayout.BeginVertical(GUILayout.Width(Screen.width / 2));
+                        if (rotator != null)
+                        {
+                            SerializedObject so = new SerializedObject(rotator);
+                            EditorGUILayout.PropertyField(so.FindProperty("_identifier"), new GUIContent("Identifier"), true);
+                            EditorGUILayout.PropertyField(so.FindProperty("_timeBeforeStoppingInSeconds"), new GUIContent("Time before stopping"), true);
+                            EditorGUILayout.PropertyField(so.FindProperty("_shouldReverseRotation"), new GUIContent("Should Reverse Rotation"), true);
+                            EditorGUILayout.PropertyField(so.FindProperty("_rotationsSettings"), new GUIContent("Rotations settings"), true);
+                            EditorGUILayout.Space();
+
+                        }
+                    EditorGUILayout.EndVertical();
+
+                    if (increment % 2 != 0)
+                    {
+                        //end of the row
+                        EditorGUILayout.EndHorizontal();
+                        DrawUILine(Color.gray, 2, 10, 0.8f);
+
+                    }
+                    increment++;
+
+                }
+
+                if (increment % 2 !=0)
+                {
+                    EditorGUILayout.EndHorizontal();
+                }
+            EditorGUILayout.EndScrollView();
         EditorGUILayout.EndVertical();
-
     }
 
-    /// <summary>
-    /// manages the effect of the button "Validate Changes"
-    /// </summary>
-    private void ValidateChanges()
+        /// <summary>
+        /// manages the effect of the button "Validate Changes"
+        /// </summary>
+        private void ValidateChanges()
     {
         foreach (Rotator rotator in rotatorsToEdit)
         {
